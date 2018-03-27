@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 
 public class Uno {
 
@@ -10,20 +11,35 @@ public class Uno {
   static final public int START_CARDS        = 7;
 
   private ArrayList<Card> m_cardDeck;
+  private ArrayList<Card> m_cardStack;
 
   private Player[] m_players;
 
+  int m_playerTurn = 0;
+  
   boolean m_isRunning = false;
 
   public Uno(Player[] players) {
 
+  	Random r = new Random();
+  
     InitDeck();
 
     m_players = players;
     for(int i = 0; i < players.length; i++)
-      m_players[i] = new Player("Player " + (i+1), InitPlayerDeck());
+      m_players[i].SetDeck(InitPlayerDeck());
+    
+    m_playerTurn = r.nextInt(m_players.length);
+    
+    m_cardStack.add(GetDeckCard());
   }
 
+  public void UpdateGameState() {
+  
+  	
+  
+  }
+  
   void InitDeck() {
 
     m_cardDeck = new ArrayList<Card>();
@@ -33,7 +49,6 @@ public class Uno {
     int loopNumCards    = TOTAL_NUM_CARDS/4;
     int loopActionCards = TOTAL_ACTION_CARDS/12;
     int loopWildCards   = TOTAL_WILD_CARDS/2;
-
 
     for(int i = 0; i < loopNumCards; i++) {
 
@@ -86,6 +101,45 @@ public class Uno {
     return deck;
   }
 
+  Card GetDeckCard() {
+  	
+  	Card card = m_cardDeck.get(0);
+  	
+  	m_cardDeck.remove(0);
+  	
+  	return card; 
+  }
+  
+  boolean IsPlayValid(Card card) {
+	  
+  	if(m_cardStack.size() > 0) {
+  
+  		Card firstCard = m_cardStack.get(m_cardStack.size()-1); 
+  	
+  		switch(card.GetCardType()) {
+  		
+  			case None: {
+	  		
+	  			if(!card.CompareCardColor(firstCard) && !card.CompareCardNumber(firstCard))
+	  				return false;
+	  			
+	  			if(card.CompareCardColor(firstCard) || card.CompareCardNumber(firstCard))
+	  				return true;
+	  		}
+  			break;
+  			
+  			case Reverse:
+  			case Skip:
+  			case DrawTwo: { return card.CompareCardColor(firstCard); }
+				
+  			case Wild:
+  			case WildDrawFour: { return true; }
+  		}
+  	}
+  		
+		return false;
+  }
+  
   void BuyCard(int playerIndex, int total) {
 
     if(m_cardDeck.size() > 0) {

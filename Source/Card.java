@@ -27,4 +27,19 @@ public class Card {
 
     m_type = type;
   }
+  
+  public CardType GetCardType() {
+  
+  	return m_type;
+  }
+  
+  public boolean CompareCardColor(Card other) {
+  
+  	return m_color == other.m_color;
+  }
+  
+  public boolean CompareCardNumber(Card other) {
+  
+		return m_number == other.m_number;
+  }
 }
