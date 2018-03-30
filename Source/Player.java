@@ -10,11 +10,23 @@ public class Player {
 
 	  m_name  = name;
   }
-  
+
+  public Player() {}
+
   public Player(String name, ArrayList<Card> deck) {
 
     m_name  = name;
     m_cards = deck;
+  }
+
+  public String GetName() {
+
+    return m_name;
+  }
+
+  public ArrayList<Card> GetDeck() {
+
+    return m_cards;
   }
 
   public void SetDeck(ArrayList<Card> deck) {
@@ -25,5 +37,23 @@ public class Player {
   public void BuyCard(Card card) {
 
     m_cards.add(card);
+
+    System.out.println(m_name + " bought a card: " + card.ToString());
   }
+
+  public int GetTotalCards() {
+
+    return m_cards.size();
+  }
+
+  public Card SelectCard(int index) {
+
+    Card card = m_cards.get(index);
+
+    m_cards.remove(index);
+
+    return card;
+  }
+
+  public String DoPlay(Uno game) { return ""; }
 }
