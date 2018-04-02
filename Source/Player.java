@@ -3,18 +3,21 @@ import java.util.ArrayList;
 public class Player {
 
   private String m_name;
+  private int m_id;
 
   private ArrayList<Card> m_cards;
 
-  public Player(String name) {
-
-	  m_name  = name;
+  public Player(int id, String name) {
+  	
+    m_id   = id;
+	  m_name = name;
   }
 
   public Player() {}
 
-  public Player(String name, ArrayList<Card> deck) {
+  public Player(int id, String name, ArrayList<Card> deck) {
 
+  	m_id    = id;
     m_name  = name;
     m_cards = deck;
   }

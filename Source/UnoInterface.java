@@ -1,0 +1,89 @@
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface UnoInterface extends Remote {
+    
+    public int registraJogador(String nome) throws RemoteException;
+    //  id do jogador
+    // -1  Jogador já registrado
+    // -2  Numero maximo de jogadores atingido!
+    
+    public int encerraPartida(int id) throws RemoteException;
+    //  0 Ok
+    // -1 Erro
+    
+    public int temPartida(int id) throws RemoteException;
+    //  2 Sim, jogador 2 começa
+    //  1 Sim, jogador 1 começa
+    //  0 Não há partida
+    // -1 Erro
+    // -2 Tempo de espera esgotado
+    
+    public int obtemOponente(int id) throws RemoteException;
+    //  "Nome" Achou oponente
+    //  ""     Erro
+    
+    public int ehMinhaVez(int id) throws RemoteException;
+    //  6 Perdedor por WO
+    //  5 Vencedor por WO
+    //  4 Empate
+    //  3 Vc é o perdedor
+    //  2 Vc é o vencedor
+    //  1 Sim
+    //  0 Não
+    // -1 Erro
+    // -2 Não há 2 jogadores
+    
+    public int obtemNumCartasBaralho(int id) throws RemoteException;
+    //  int Número de cartas do baralho
+    // -1   Erro
+    // -2   Não há 2 jogadores
+    
+    public int obtemNumCartas(int id) throws RemoteException;
+    //  int Número de cartas do baralho do jogador
+    // -1   Erro
+    // -2   Não há 2 jogadores
+    
+    public int obtemNumCartasOponente(int id) throws RemoteException;
+    //  int Número de cartas do baralho do oponente
+    // -1   Erro
+    // -2   Não há 2 jogadores
+    
+    public int mostraMao(int id) throws RemoteException;
+    //  "TODO" Lista de cartas
+    //  ""     Erro
+    
+    public int obtemCartaMesa(int id) throws RemoteException;
+    //  "TODO" Carta da mesa
+    //  ""     Erro
+    
+    public int obtemCorAtiva(int id) throws RemoteException;
+    //  3 Azul
+    //  2 Amarelo
+    //  1 Verde
+    //  0 Vermelho
+    
+    public int compraCarta(int id) throws RemoteException;
+    //  0 Ok
+    // -1 Erro
+    
+    public int jogaCarta(int id, int cartaMaoIndex, int corCarta) throws RemoteException;
+    //  1 Ok
+    //  0 Jogada inválida (cor não corresponde)
+    // -1 Jogador não encontrado
+    // -2 Não há 2 jogadores
+    // -3 Parâmetros inválidos
+    // -4 Não é a vez do jogador
+    
+    public int obtemPontos(int id) throws RemoteException;
+    //  int Pontos totais
+    // -1   Jogador não encontrado
+    // -2   Não há 2 jogadores
+    // -3   Partida não concluída
+    
+    public int obtemPontosOponente(int id) throws RemoteException;
+    //  int Pontos totais
+    // -1   Jogador não encontrado
+    // -2   Não há 2 jogadores
+    // -3   Partida não concluída
+}

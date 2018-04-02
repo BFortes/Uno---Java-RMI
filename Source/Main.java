@@ -2,14 +2,14 @@ public class Main {
 
   public static void main(String[] args) {
 
-  	Player[] players = { new Player("Elton Nanico"), new Player("Pedro Peludo") };
+  	Player[] players = { new Player(1, "Elton Nanico"), new Player(2, "Pedro Peludo") };
   
-    Uno game = new Uno(players);
+    /*Uno game = new Uno(players);
     while(game.IsRunning()) {
 
     	game.UpdateGameState();
     }
 
-    System.out.println("Player " + game.GetWinner() + " Wins!");
+    System.out.println("Player " + game.GetWinner() + " Wins!");*/
   }
 }
