@@ -4,15 +4,22 @@ import java.util.ArrayList;
 
 public class Uno extends UnicastRemoteObject implements UnoInterface {
 
-	final int MAX_GAMES = 500;
+	final int MAX_GAMES = 10;
 	
 	private ArrayList<UnoGame> m_games;
 	private ArrayList<Player>  m_users;
+	
+	private int m_playerId = 0;
 	
 	public Uno() throws RemoteException {
 		
 		m_games = new ArrayList<UnoGame>();
 		m_users = new ArrayList<Player>();
+		
+		for(int i = 0; i < MAX_GAMES; i++) {
+			
+			m_games.add(new UnoGame(i));
+		}
 	}
 	
 	@Override
@@ -27,10 +34,24 @@ public class Uno extends UnicastRemoteObject implements UnoInterface {
 		UnoGame game = null;
 		for(int i = 0; i < m_games.size(); i++) {
 		
-			if()
+			UnoGame g = m_games.get(i); 
+		
+			if(!g.IsRunning() && g.TotalPlayers() < 2) {
+				
+				game = g;
+				
+				break;
+			}
 		}
-	
-		return 0;
+		
+		if(game == null)
+			return -2;
+		
+		Player newPlayer = new Player(game.GetGameId(), GetPlayerId(), nome); 
+		
+		game.AddPlayer(newPlayer);
+		
+		return newPlayer.GetId();
 	}
 	
 	@Override
@@ -115,5 +136,10 @@ public class Uno extends UnicastRemoteObject implements UnoInterface {
 	public int obtemPontosOponente(int id) throws RemoteException {
 		// TODO Auto-generated method stub
 		return 0;
-}
+	}
+	
+	private synchronized int GetPlayerId() {
+	
+		return m_playerId++;
+	}
 }

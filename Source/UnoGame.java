@@ -15,10 +15,12 @@ public class UnoGame {
 	
 	private GameState m_state = GameState.Null;
 	
+	private int m_gameId;
+	
 	public ArrayList<Card> m_cardDeck;
 	public ArrayList<Card> m_cardStack;
 	
-	private Player[] m_players;
+	private ArrayList<Player> m_players;
 	int m_playerTurn = 0;
 	
 	public boolean m_playerCanBuyCard  = false;
@@ -31,24 +33,50 @@ public class UnoGame {
 	
 	public UnoGame() {}
 	
-	public UnoGame(Player[] players) {
+	public UnoGame(int id) {
+	
+		m_gameId = id;
+	
+		m_state = GameState.Null;
+	}
+	
+	public boolean StartGame() {
+	
+		if(m_players.size() < 2)
+			return false;
 	
 		Random r = new Random();
-	
+		
 		InitDeck();
 	
-	  m_players = players;
-	  for(int i = 0; i < players.length; i++)
-	    m_players[i].SetDeck(InitPlayerDeck());
+	  for(int i = 0; i < m_players.size(); i++)
+	    m_players.get(i).SetDeck(InitPlayerDeck());
 	  
-	  m_playerTurn = r.nextInt(m_players.length);
+	  m_playerTurn = r.nextInt(m_players.size());
 	
 	  m_cardStack = new ArrayList<Card>();
 	  m_cardStack.add(GetFirstDeckCard());
 	
 	  m_state = GameState.ReadInput;
+	  
+	  return true;
+	}
 	
-	  m_isRunning = true;
+	public void ResetGame() {
+	
+		m_state = GameState.Null;
+	
+		m_players.clear();
+		m_cardDeck.clear();
+		m_cardStack.clear();
+		
+		m_playerTurn = 0;
+		
+		m_playerCanBuyCard  = false;
+		m_playerCanPassTurn = false;
+		
+		m_cardCurColor   = Card.CardColor.None;
+		m_cardTypeEffect = Card.CardType.None;
 	}
 	
 	void InitDeck() {
@@ -104,7 +132,7 @@ public class UnoGame {
 	
 	    case ReadInput: {
 	
-	      System.out.println("\n########## " + m_players[m_playerTurn].GetName() + " Turn ##########\n");
+	      System.out.println("\n########## " + m_players.get(m_playerTurn).GetName() + " Turn ##########\n");
 	
 	      System.out.println("Table: ");
 	      m_cardStack.get(m_cardStack.size()-1).PrintCard();
@@ -113,7 +141,7 @@ public class UnoGame {
 	
 	      Scanner reader = new Scanner(System.in);
 	
-	      ArrayList<Card> pDeck = m_players[m_playerTurn].GetDeck();
+	      ArrayList<Card> pDeck = m_players.get(m_playerTurn).GetDeck();
 	      for(int i = 0; i < pDeck.size(); i++) {
 	
 	        Card card = pDeck.get(i);
@@ -157,7 +185,7 @@ public class UnoGame {
 	
 	              m_cardStack.add(card);
 	
-	              m_players[m_playerTurn].SelectCard(c-1);
+	              m_players.get(m_playerTurn).SelectCard(c-1);
 	
 	              m_cardTypeEffect = card.GetCardType();
 	
@@ -179,20 +207,20 @@ public class UnoGame {
 	
 	    case ChangeTurn: {
 	
-	      if(m_players[m_playerTurn].GetTotalCards() == 0) {
+	      if(m_players.get(m_playerTurn).GetTotalCards() == 0) {
 	
 	        m_isRunning = false;
 	      }
 	      else {
 	
-	        m_playerTurn = (m_playerTurn+1)%m_players.length;
+	        m_playerTurn = (m_playerTurn+1)%m_players.size();
 	
 	        switch(m_cardTypeEffect) {
 	
 	          case Reverse:
 	          case Skip: {
 	
-	            m_playerTurn = (m_playerTurn+1)%m_players.length;
+	            m_playerTurn = (m_playerTurn+1)%m_players.size();
 	
 	          }
 	          break;
@@ -201,7 +229,7 @@ public class UnoGame {
 	
 	            BuyCard(m_playerTurn, 2);
 	
-	            m_playerTurn = (m_playerTurn+1)%m_players.length;
+	            m_playerTurn = (m_playerTurn+1)%m_players.size();
 	          }
 	          break;
 	
@@ -292,7 +320,7 @@ public class UnoGame {
 				case WildDrawFour: {
 	
 				  boolean canPlay = true;
-				  for(Card c : m_players[m_playerTurn].GetDeck()) {
+				  for(Card c : m_players.get(m_playerTurn).GetDeck()) {
 	
 	          if(c.GetCardType() != Card.CardType.WildDrawFour) {
 	
@@ -324,7 +352,7 @@ public class UnoGame {
 	
 	        Card card = m_cardDeck.get(i);
 	
-	        m_players[playerIndex].BuyCard(card);
+	        m_players.get(m_playerTurn).BuyCard(card);
 	
 	        m_cardDeck.remove(i);
 	      }
@@ -338,11 +366,31 @@ public class UnoGame {
 	
 	public String GetWinner() {
 	
-	  return m_players[m_playerTurn].GetName();
+	  return m_players.get(m_playerTurn).GetName();
+	}
+	
+	public boolean AddPlayer(Player newPlayer) {
+	
+		if(TotalPlayers() == 2)
+			return false;
+	
+		m_players.add(newPlayer);
+		
+		return true;
+	}
+	
+	public int TotalPlayers() {
+	
+		return m_players.size();
+	}
+	
+	public int GetGameId() {
+	
+		return m_gameId;
 	}
 	
 	public boolean IsRunning() {
 	
-	  return m_isRunning;
+	  return m_state != GameState.Null;
 	}
 }

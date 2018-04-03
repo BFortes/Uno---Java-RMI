@@ -12,9 +12,9 @@ public class UnoServer {
 		}
 		try {
 			Naming.rebind("Uno", new Uno());
-			System.out.println ("NotasServer is ready.");
+			System.out.println ("UnoServer is ready.");
 		} catch (Exception e) {
-			System.out.println ("NotasServer failed:");
+			System.out.println ("UnoServer failed:");
 			e.printStackTrace();
 		}
 	}

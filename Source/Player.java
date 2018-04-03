@@ -1,14 +1,18 @@
 import java.util.ArrayList;
 
 public class Player {
+	
+	private int m_gameId = -1;
 
   private String m_name;
   private int m_id;
 
   private ArrayList<Card> m_cards;
 
-  public Player(int id, String name) {
-  	
+  public Player(int gameId, int id, String name) {
+  
+  	m_gameId = gameId;
+  
     m_id   = id;
 	  m_name = name;
   }
@@ -22,6 +26,16 @@ public class Player {
     m_cards = deck;
   }
 
+  public int GetGameId() {
+
+	  return m_gameId;
+  }
+  
+  public int GetId() {
+
+	  return m_id;
+	}
+  
   public String GetName() {
 
     return m_name;
