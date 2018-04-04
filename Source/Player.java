@@ -19,6 +19,12 @@ public class Player {
 
   public Player() {}
 
+  public Player(int id, String name) {
+  
+	  m_id   = id;
+	  m_name = name;
+	}
+  
   public Player(int id, String name, ArrayList<Card> deck) {
 
   	m_id    = id;

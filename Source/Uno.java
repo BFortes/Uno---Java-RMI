@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class Uno extends UnicastRemoteObject implements UnoInterface {
 
 	final int MAX_GAMES = 10;
+	final int MAX_USERS = MAX_GAMES/2;
 	
 	private ArrayList<UnoGame> m_games;
 	private ArrayList<Player>  m_users;
@@ -25,33 +26,17 @@ public class Uno extends UnicastRemoteObject implements UnoInterface {
 	@Override
 	public int registraJogador(String nome) throws RemoteException {
 
-		for(Player p : m_users) {
-			
+		for(Player p : m_users)
 			if(p.GetName().equals(nome))
 				return -1;
-		}
 	
-		UnoGame game = null;
-		for(int i = 0; i < m_games.size(); i++) {
-		
-			UnoGame g = m_games.get(i); 
-		
-			if(!g.IsRunning() && g.TotalPlayers() < 2) {
-				
-				game = g;
-				
-				break;
-			}
-		}
-		
-		if(game == null)
+		if(m_users.size() == MAX_USERS)
 			return -2;
 		
-		Player newPlayer = new Player(game.GetGameId(), GetPlayerId(), nome); 
+		int id = GetPlayerId();
+		AddPlayerToList(id, nome);
 		
-		game.AddPlayer(newPlayer);
-		
-		return newPlayer.GetId();
+		return id;
 	}
 	
 	@Override
@@ -62,7 +47,15 @@ public class Uno extends UnicastRemoteObject implements UnoInterface {
 	
 	@Override
 	public int temPartida(int id) throws RemoteException {
-		// TODO Auto-generated method stub
+		
+		UnoGame game = GetFreeGame();
+		
+		if(game != null) {
+		
+		
+			
+		}
+		
 		return 0;
 	}
 	
@@ -141,5 +134,34 @@ public class Uno extends UnicastRemoteObject implements UnoInterface {
 	private synchronized int GetPlayerId() {
 	
 		return m_playerId++;
+	}
+	
+	private synchronized UnoGame GetFreeGame() {
+	
+		for(int i = 0; i < m_games.size(); i++) {
+	
+			UnoGame g = m_games.get(i); 
+		
+			if(!g.IsRunning() && g.TotalPlayers() < 2) {
+				
+				return g;
+			}
+		}
+		
+		return null;
+	}
+	
+	private synchronized void AddPlayerToList(int id, String name) {
+	
+		Player newPlayer = new Player(id, name); 
+		
+		m_users.add(newPlayer);
+	}
+	
+	private synchronized void AddPlayerToGame(UnoGame game, int id, String name) {
+		
+		Player newPlayer = new Player(game.GetGameId(), GetPlayerId(), name); 
+		
+		game.AddPlayer(newPlayer);
 	}
 }
