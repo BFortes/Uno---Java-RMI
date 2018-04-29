@@ -9,7 +9,9 @@ public class UnoClient {
 	static public int m_playerID = -1;
 
 	public static void main(String[] args) {
-	
+
+		long lastTime = System.nanoTime();
+
 		Scanner scanner = new Scanner(System.in);
 		
 		//System.out.println("Digite o endereco da maquina seguido de <ENTER>...");
@@ -28,7 +30,7 @@ public class UnoClient {
 			
 			if(m_playerID == -1) {
 			
-				System.out.println("Jogador já registrado!");
+				System.out.println("Jogador ja registrado!");
 			}
 			else {
 			
@@ -36,8 +38,9 @@ public class UnoClient {
 			}
 			
 			System.out.println("Procurando partida...");
+			boolean gameFound = false;
 			while(true) {
-			
+
 				int p = uno.temPartida(m_playerID); 
 			
 				if(p == 0) {
@@ -45,18 +48,51 @@ public class UnoClient {
 					System.out.println("Servidor lotado!");
 					System.exit(1);
 				}
-				if(p == -1) {
+				else if(p == -1) {
 					
 					System.out.println("Erro!");
 					System.exit(1);
 				}
-				if(p == -2) {
+				else if(p == -2) {
 				
 					System.out.println("Tempo de espera esgotado!");
 					System.exit(1);
 				}
+				else {
+
+          System.out.println("Buscando oponente...");
+          String opName = "";
+
+          if(p == 1) {
+
+            while(true) {
+
+              opName = uno.obtemOponente(m_playerID);
+              if(!opName.isEmpty()) {
+
+                gameFound = true;
+
+                break;
+              }
+            }
+          }
+          else if(p == 2) {
+
+            gameFound = true;
+
+            opName = uno.obtemOponente(m_playerID);
+          }
+
+          System.out.println("Achou! ->  " + opName);
+
+          break;
+        }
 			}
-			
+
+			if(gameFound) {
+
+
+      }
 		} 
 		catch (MalformedURLException e) {
 		
@@ -70,5 +106,7 @@ public class UnoClient {
 			e.printStackTrace();
 		}
 	}
+
+	//private int
 
 }

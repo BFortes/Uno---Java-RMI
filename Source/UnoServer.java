@@ -11,7 +11,7 @@ public class UnoServer {
 			System.out.println("RMI registry already running.");			
 		}
 		try {
-			Naming.rebind("Uno", new Uno());
+			Naming.rebind("UnoManager", new UnoManager());
 			System.out.println ("UnoServer is ready.");
 		} catch (Exception e) {
 			System.out.println ("UnoServer failed:");

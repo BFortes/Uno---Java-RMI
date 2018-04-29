@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 
 public class Player {
-	
-	private int m_gameId = -1;
+
+  private int m_gameId = -1;
 
   private String m_name;
   private int m_id;
 
-  private ArrayList<Card> m_cards;
+  protected ArrayList<Card> m_cards;
 
   public Player(int gameId, int id, String name) {
   
@@ -32,16 +32,9 @@ public class Player {
     m_cards = deck;
   }
 
-  public int GetGameId() {
-
-	  return m_gameId;
-  }
+  public int GetGameId() { return m_gameId; }
   
-  public int GetId() {
-
-	  return m_id;
-	}
-  
+  public int GetId() { return m_id; }
   public String GetName() {
 
     return m_name;
@@ -78,5 +71,6 @@ public class Player {
     return card;
   }
 
-  public String DoPlay(Uno game) { return ""; }
+  public String DoPlay(UnoLogic game) { return ""; }
+  public String ChoiceColor()    { return ""; }
 }

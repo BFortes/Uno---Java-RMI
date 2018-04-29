@@ -5,7 +5,7 @@ public interface UnoInterface extends Remote {
     
     public int registraJogador(String nome) throws RemoteException;
     //  id do jogador
-    // -1  Jogador já registrado
+    // -1  Jogador ja registrado
     // -2  Numero maximo de jogadores atingido!
     
     public int encerraPartida(int id) throws RemoteException;
@@ -13,13 +13,13 @@ public interface UnoInterface extends Remote {
     // -1 Erro
     
     public int temPartida(int id) throws RemoteException;
-    //  2 Sim, jogador 2 começa
-    //  1 Sim, jogador 1 começa
-    //  0 Não há partida
+    //  2 Sim, jogador 1 comeca
+    //  1 Sim, jogador 1 comeca
+    //  0 Nao ha partida
     // -1 Erro
     // -2 Tempo de espera esgotado
     
-    public int obtemOponente(int id) throws RemoteException;
+    public String obtemOponente(int id) throws RemoteException;
     //  "Nome" Achou oponente
     //  ""     Erro
     
@@ -27,27 +27,27 @@ public interface UnoInterface extends Remote {
     //  6 Perdedor por WO
     //  5 Vencedor por WO
     //  4 Empate
-    //  3 Vc é o perdedor
-    //  2 Vc é o vencedor
+    //  3 Vc eh o perdedor
+    //  2 Vc eh o vencedor
     //  1 Sim
-    //  0 Não
+    //  0 Nao
     // -1 Erro
-    // -2 Não há 2 jogadores
+    // -2 Nao ha 2 jogadores
     
     public int obtemNumCartasBaralho(int id) throws RemoteException;
-    //  int Número de cartas do baralho
+    //  int Numero de cartas do baralho
     // -1   Erro
-    // -2   Não há 2 jogadores
+    // -2   Nao ha 2 jogadores
     
     public int obtemNumCartas(int id) throws RemoteException;
-    //  int Número de cartas do baralho do jogador
+    //  int Nï¿½umero de cartas do baralho do jogador
     // -1   Erro
-    // -2   Não há 2 jogadores
+    // -2   Nao ha 2 jogadores
     
     public int obtemNumCartasOponente(int id) throws RemoteException;
-    //  int Número de cartas do baralho do oponente
+    //  int Numero de cartas do baralho do oponente
     // -1   Erro
-    // -2   Não há 2 jogadores
+    // -2   Nao ha 2 jogadores
     
     public int mostraMao(int id) throws RemoteException;
     //  "TODO" Lista de cartas
@@ -69,21 +69,21 @@ public interface UnoInterface extends Remote {
     
     public int jogaCarta(int id, int cartaMaoIndex, int corCarta) throws RemoteException;
     //  1 Ok
-    //  0 Jogada inválida (cor não corresponde)
-    // -1 Jogador não encontrado
-    // -2 Não há 2 jogadores
-    // -3 Parâmetros inválidos
-    // -4 Não é a vez do jogador
+    //  0 Jogada invalida (cor nao corresponde)
+    // -1 Jogador nao encontrado
+    // -2 Nao ha 2 jogadores
+    // -3 Parametros invalidos
+    // -4 Nao a a vez do jogador
     
     public int obtemPontos(int id) throws RemoteException;
     //  int Pontos totais
-    // -1   Jogador não encontrado
-    // -2   Não há 2 jogadores
-    // -3   Partida não concluída
+    // -1   Jogador nao encontrado
+    // -2   Nao ha 2 jogadores
+    // -3   Partida nao concluida
     
     public int obtemPontosOponente(int id) throws RemoteException;
     //  int Pontos totais
-    // -1   Jogador não encontrado
-    // -2   Não há 2 jogadores
-    // -3   Partida não concluída
+    // -1   Jogador nao encontrado
+    // -2   Nao ha 2 jogadores
+    // -3   Partida nao concluida
 }

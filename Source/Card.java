@@ -1,7 +1,7 @@
 public class Card {
 
-  public enum CardType  { None, Reverse, Skip, DrawTwo, Wild, WildDrawFour }
-  public enum CardColor { None, Yellow, Red, Green, Blue }
+  public enum CardType  { Reverse, Skip, DrawTwo, Wild, WildDrawFour, None }
+  public enum CardColor { Red, Green, Yellow, Blue, None }
 
   private CardType  m_type;
   private CardColor m_color;
@@ -38,18 +38,29 @@ public class Card {
   public Card(CardType type) {
 
     m_type = type;
+    m_color = CardColor.None;
   }
   
   public CardType GetCardType() {
   
   	return m_type;
   }
-  
+
+  public CardColor GetCardColor() {
+
+    return m_color;
+  }
+
   public boolean CompareCardColor(Card other) {
   
   	return m_color == other.m_color;
   }
-  
+
+  public boolean CompareCardColor(CardColor color) {
+
+    return m_color == color;
+  }
+
   public boolean CompareCardNumber(Card other) {
   
 		return m_number == other.m_number;
