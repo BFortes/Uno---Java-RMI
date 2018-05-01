@@ -139,16 +139,24 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 	}
 	
 	@Override
-	public int mostraMao(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+	public String mostraMao(int id) throws RemoteException {
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return "";
+
+    return game.GetPlayerDeckString(id);
 	}
 	
 	@Override
-	public int obtemCartaMesa(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	public String obtemCartaMesa(int id) throws RemoteException {
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return "";
+
+    return game.GetFirstStackCardString();
+  }
 	
 	@Override
 	public int obtemCorAtiva(int id) throws RemoteException {
@@ -178,20 +186,57 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 	
 	@Override
 	public int jogaCarta(int id, int cartaMaoIndex, int corCarta) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+    //  1 Ok
+    //  0 Jogada invalida (cor nao corresponde)
+    // -1 Jogador nao encontrado
+    // -2 Nao ha 2 jogadores
+    // -3 Parametros invalidos
+    // -4 Nao a a vez do jogador
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return -1;
+
+    if(game.TotalPlayers() < 2)
+      return -2;
+
+    if(!game.IsPlayerTurn(id))
+      return -4;
+
+    return game.UpdateGameState(id, cartaMaoIndex, corCarta);
 	}
 	
 	@Override
 	public int obtemPontos(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return -1;
+
+    if(game.TotalPlayers() < 2)
+      return -2;
+
+    if(game.IsRunning())
+      return -3;
+
+    return game.GetPlayerPoints(id, false);
 	}
 	
 	@Override
 	public int obtemPontosOponente(int id) throws RemoteException {
-		// TODO Auto-generated method stub
-		return 0;
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return -1;
+
+    if(game.TotalPlayers() < 2)
+      return -2;
+
+    if(game.IsRunning())
+      return -3;
+
+    return game.GetPlayerPoints(id, true);
 	}
 	
 	private synchronized int GetPlayerId() {

@@ -195,6 +195,19 @@ public class Card {
     }
   }
 
+  public int GetPoints() {
+
+    switch(m_type) {
+
+      case DrawTwo:
+      case Skip:
+      case Reverse:      return 20;
+      case Wild:
+      case WildDrawFour: return 50;
+      default:           return m_number;
+    }
+  }
+
   public String ToString() {
 
     String s = "";

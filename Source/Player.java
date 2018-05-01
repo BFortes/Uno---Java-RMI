@@ -7,7 +7,7 @@ public class Player {
   private String m_name;
   private int m_id;
 
-  protected ArrayList<Card> m_cards;
+  public ArrayList<Card> m_cards;
 
   public Player(int gameId, int id, String name) {
   
@@ -60,6 +60,15 @@ public class Player {
   public int GetTotalCards() {
 
     return m_cards.size();
+  }
+
+  public int GetTotalPoints() {
+
+    int sum = 0;
+    for(int i = 0; i < m_cards.size(); i++)
+      sum += m_cards.get(i).GetPoints();
+
+    return sum;
   }
 
   public Card SelectCard(int index) {

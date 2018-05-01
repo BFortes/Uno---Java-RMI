@@ -49,13 +49,13 @@ public interface UnoInterface extends Remote {
     // -1   Erro
     // -2   Nao ha 2 jogadores
     
-    public int mostraMao(int id) throws RemoteException;
-    //  "TODO" Lista de cartas
-    //  ""     Erro
+    public String mostraMao(int id) throws RemoteException;
+    //  String Json Lista de cartas
+    //  ""          Erro
     
-    public int obtemCartaMesa(int id) throws RemoteException;
-    //  "TODO" Carta da mesa
-    //  ""     Erro
+    public String obtemCartaMesa(int id) throws RemoteException;
+    //  String Json Carta da mesa
+    //  ""          Erro
     
     public int obtemCorAtiva(int id) throws RemoteException;
     //  3 Azul

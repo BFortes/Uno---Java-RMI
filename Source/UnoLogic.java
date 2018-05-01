@@ -2,10 +2,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Scanner;
+import com.google.gson.Gson;
 
 public class UnoLogic {
 
-  public enum GameState { Null, ReadInput, ChangeTurn, Results }
+  public enum GameState { Null, Playing, Results }
 
   static final public int TOTAL_CARDS        = 108;
   static final public int TOTAL_NUM_CARDS    = 76;
@@ -30,6 +31,8 @@ public class UnoLogic {
   public Card.CardType m_cardTypeEffect = Card.CardType.None;
 
   boolean m_isRunning = false;
+
+  Gson m_gson = new Gson();
 
 	public UnoLogic() {}
 	
@@ -57,7 +60,7 @@ public class UnoLogic {
     m_cardStack = new ArrayList<Card>();
     m_cardStack.add(GetFirstDeckCard());
 
-    m_state = GameState.ReadInput;
+    m_state = GameState.Playing;
 
     return true;
   }
@@ -126,148 +129,128 @@ public class UnoLogic {
     Collections.shuffle(m_cardDeck);
   }
 
-  public void UpdateGameState() {
+  public int UpdateGameState(int id, int cardIndex, int color) {
 
-    switch(m_state) {
+    Player p = m_players.get(m_playerTurn);
+    if(p.GetId() != id)
+      return -4;
 
-      case ReadInput: {
+    Card card = p.GetDeck().get(cardIndex);
+    if(IsPlayValid(card)) {
 
-        ArrayList<Card> pDeck = m_players.get(m_playerTurn).GetDeck();
+      m_cardStack.add(card);
 
-        System.out.println("\n########## " + m_players.get(m_playerTurn).GetName() + " Turn ##########\n");
+      m_players.get(m_playerTurn).SelectCard(cardIndex);
 
-        System.out.println("Table: ");
-        m_cardStack.get(m_cardStack.size()-1).PrintCard();
-        System.out.println("Cur Color: " + m_cardCurColor + "\n");
+      m_cardTypeEffect = card.GetCardType();
+      m_cardCurColor   = m_cardTypeEffect == Card.CardType.Wild
+                         || m_cardTypeEffect == Card.CardType.WildDrawFour ? Card.CardColor.values()[color]
+                                                                           : card.GetCardColor();
 
-        if(m_players.get(m_playerTurn).getClass() != PlayerRandom.class) {
+      ChangeTurn();
 
-          System.out.println("Cards: ");
+      return 1;
+    }
+    else {
 
-          for(int i = 0; i < pDeck.size(); i++) {
+      return 0;
+    }
+  }
 
-            Card card = pDeck.get(i);
+  void ChangeTurn() {
 
-            System.out.println((i+1) + " - " + card.ToString());
-          }
-          System.out.println("\nActions: ");
-          System.out.println("B - Buy a card");
-          System.out.println("P - Pass turn");
+    if(m_players.get(m_playerTurn).GetTotalCards() == 0) {
 
-          System.out.print("\nSelect a play: ");
+      m_state = GameState.Results;
+    }
+    else if(m_cardDeck.size() == 0 && !HavePlayerAction()) {
+
+      m_state = GameState.Results;
+    }
+    else {
+
+      switch(m_cardTypeEffect) {
+
+        case Reverse:
+        case Skip: {
+
+          m_playerTurn = (m_playerTurn+1)%m_players.size();
         }
+        break;
 
-        Scanner reader = new Scanner(System.in);
-        String op = m_players.get(m_playerTurn).getClass() == PlayerRandom.class ? m_players.get(m_playerTurn).DoPlay(this) : reader.next().toLowerCase();
-
-        System.out.println("\nPlay selected: " + op);
-
-        if(op.equals("b") || op.equals("p")) {
-
-          if(op.equals("b")) {
-
-            BuyCard(m_playerTurn, 1);
-          }
-          else {
-
-            m_state = GameState.ChangeTurn;
-          }
-        }
-        else {
-
-          try {
-
-            int c = Integer.parseInt(op);
-
-            if(c <= 0 || c > pDeck.size()) {
-
-              System.out.println("\nInvalid option! " + op + "\n");
-            }
-            else {
-
-              Card card = pDeck.get(c-1);
-
-              if(IsPlayValid(card)) {
-
-                m_cardStack.add(card);
-
-                m_players.get(m_playerTurn).SelectCard(c-1);
-
-                m_cardTypeEffect = card.GetCardType();
-                m_cardCurColor = card.GetCardColor();
-
-                m_state = GameState.ChangeTurn;
-              }
-              else {
-
-                System.out.println("\nInvalid Play!\n");
-              }
-            }
-          }
-          catch(Exception e) {
-
-            System.out.println("\nInvalid option! " + op + "\n");
-          }
-        }
-      }
-      break;
-
-      case ChangeTurn: {
-
-        if(m_players.get(m_playerTurn).GetTotalCards() == 0) {
-
-          m_state = GameState.Results;
-        }
-        else if(m_cardDeck.size() == 0) {
-
-
-        }
-        else {
-
-          switch(m_cardTypeEffect) {
-
-            case Reverse:
-            case Skip: {
-
-              m_playerTurn = (m_playerTurn+1)%m_players.size();
-
-            }
-            break;
-
-            case DrawTwo: {
-
-              m_playerTurn = (m_playerTurn+1)%m_players.size();
-
-              BuyCard(m_playerTurn, 2);
-            }
-            break;
-
-            case Wild: {
-
-              ChoiceColor();
-            }
-            break;
-
-            case WildDrawFour: {
-
-              BuyCard((m_playerTurn+1)%m_players.size(), 4);
-
-              ChoiceColor();
-            }
-            break;
-          }
+        case DrawTwo: {
 
           m_playerTurn = (m_playerTurn+1)%m_players.size();
 
-          m_cardTypeEffect = Card.CardType.None;
+          BuyCard(m_playerTurn, 2);
+        }
+        break;
 
-          m_playerCanBuyCard = m_cardDeck.size() > 0;
+        case WildDrawFour: {
 
-          m_state = GameState.ReadInput;
+          BuyCard((m_playerTurn+1)%m_players.size(), 4);
+        }
+        break;
+      }
+
+      m_playerTurn = (m_playerTurn+1)%m_players.size();
+
+      m_cardTypeEffect = Card.CardType.None;
+
+      m_playerCanBuyCard = m_cardDeck.size() > 0;
+    }
+  }
+
+  boolean IsPlayValid(Card card) {
+
+    if(m_cardStack.size() > 0) {
+
+      Card firstCard = m_cardStack.get(m_cardStack.size()-1);
+
+      switch(card.GetCardType()) {
+
+        case None: {
+
+          if(!card.CompareCardColor(m_cardCurColor) && !card.CompareCardNumber(firstCard))
+            return false;
+
+          if(card.CompareCardColor(m_cardCurColor) || card.CompareCardNumber(firstCard))
+            return true;
+        }
+        break;
+
+        case Reverse:
+        case Skip:
+        case DrawTwo: {
+
+          return card.CompareCardType(firstCard) || card.CompareCardColor(m_cardCurColor);
+        }
+
+        case Wild: {
+
+          return true;
+        }
+        case WildDrawFour: {
+
+          boolean canPlay = true;
+          for(Card c : m_players.get(m_playerTurn).GetDeck()) {
+
+            if(c.GetCardType() != Card.CardType.WildDrawFour) {
+
+              if(c.GetCardType() == Card.CardType.Wild || c.CompareCardColor(m_cardCurColor))
+                canPlay = false;
+            }
+
+            if(!canPlay)
+              break;
+          }
+
+          return canPlay;
         }
       }
-      break;
     }
+
+    return false;
   }
 
   ArrayList<Card> InitPlayerDeck() {
@@ -305,60 +288,6 @@ public class UnoLogic {
     }
   }
 
-  boolean IsPlayValid(Card card) {
-	  
-  	if(m_cardStack.size() > 0) {
-  
-  		Card firstCard = m_cardStack.get(m_cardStack.size()-1); 
-  	
-  		switch(card.GetCardType()) {
-  		
-  			case None: {
-
-	  			if(!card.CompareCardColor(m_cardCurColor) && !card.CompareCardNumber(firstCard))
-	  				return false;
-
-	  			if(card.CompareCardColor(m_cardCurColor) || card.CompareCardNumber(firstCard))
-	  				return true;
-	  		}
-  			break;
-  			
-  			case Reverse:
-  			case Skip:
-  			case DrawTwo: {
-
-  			  return card.CompareCardType(firstCard) || card.CompareCardColor(m_cardCurColor);
-  			}
-				
-  			case Wild: {
-
-  			  return true;
-  			}
-  			case WildDrawFour: {
-
-  			  boolean canPlay = true;
-  			  for(Card c : m_players.get(m_playerTurn).GetDeck()) {
-
-            if(c.GetCardType() != Card.CardType.WildDrawFour) {
-
-              if(c.GetCardType() == Card.CardType.Wild)
-                canPlay = false;
-              else if(c.CompareCardColor(m_cardCurColor))
-                canPlay = false;
-            }
-
-            if(!canPlay)
-              break;
-          }
-
-          return canPlay;
-        }
-  		}
-  	}
-  		
-		return false;
-  }
-  
   void BuyCard(int playerIndex, int total) {
 
     if(m_cardDeck.size() > 0) {
@@ -383,33 +312,6 @@ public class UnoLogic {
     }
   }
 
-  void ChoiceColor() {
-
-    if(m_players.get(m_playerTurn).getClass() != PlayerRandom.class) {
-
-      System.out.println("\nColors: ");
-      System.out.println("1 - Blue");
-      System.out.println("2 - Red");
-      System.out.println("3 - Yellow");
-      System.out.println("4 - Green");
-
-      System.out.print("\nSelect a color: ");
-    }
-
-    Scanner reader = new Scanner(System.in);
-    String op = m_players.get(m_playerTurn).getClass() == PlayerRandom.class ? m_players.get(m_playerTurn).ChoiceColor() : reader.next().toLowerCase();
-    System.out.println("\nColor selected: " + op);
-
-    if(op.equals("1"))
-      m_cardCurColor = Card.CardColor.Blue;
-    else if(op.equals("2"))
-      m_cardCurColor = Card.CardColor.Red;
-    else if(op.equals("3"))
-      m_cardCurColor = Card.CardColor.Yellow;
-    else if(op.equals("4"))
-      m_cardCurColor = Card.CardColor.Green;
-  }
-
   public int GetWinner(int id) {
 
     if(m_state == GameState.Results) {
@@ -420,15 +322,15 @@ public class UnoLogic {
 
       for(int i = 0; i < m_players.size(); i++) {
 
-        int p = m_players.get(i).GetTotalCards();
+        int p = m_players.get(i).GetTotalPoints();
 
         if(m_players.get(i).GetId() == id)
           myNum = i+1;
 
         if(i == 0)
-          p1Points = p;
-        else
           p2Points = p;
+        else
+          p1Points = p;
       }
 
       if(myNum == 2) {
@@ -527,6 +429,54 @@ public class UnoLogic {
     BuyCard(myIndex, 1);
 
     return true;
+  }
+
+  public String GetPlayerDeckString(int id) {
+
+    for(int i = 0; i < m_players.size(); i++) {
+
+      Player p = m_players.get(i);
+
+      if(p.GetId() == id) {
+
+        return m_gson.toJson(p.GetDeck());
+      }
+    }
+
+    return "";
+  }
+
+  public String GetFirstStackCardString () {
+
+    if(m_cardStack.size() > 0)
+      return m_gson.toJson(m_cardStack.get(m_cardStack.size()-1));
+
+    return "";
+  }
+
+  public boolean HavePlayerAction() {
+
+    ArrayList<Card> pDeck = m_players.get(m_playerTurn).GetDeck();
+    for(int i = 0; i < pDeck.size(); i++) {
+
+      if(IsPlayValid(pDeck.get(i)))
+        return true;
+    }
+
+    return false;
+  }
+
+  public int GetPlayerPoints(int id, boolean opponent) {
+
+    for(int i = 0; i < m_players.size(); i++) {
+
+      Player p = m_players.get(i);
+      if(p.GetId() == id && !opponent
+          || p.GetId() != id && opponent)
+        return p.GetTotalPoints();
+    }
+
+    return 0;
   }
 
 	public int GetGameId() {
