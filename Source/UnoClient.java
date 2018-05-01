@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class UnoClient {
 
@@ -28,7 +29,7 @@ public class UnoClient {
 	
 		try {
 		
-			UnoInterface uno = (UnoInterface)Naming.lookup("//localhost/PID");
+			UnoInterface uno = (UnoInterface)Naming.lookup("//localhost/UnoManager");
 			
 			m_playerID = uno.registraJogador(nome);
 			
@@ -67,29 +68,40 @@ public class UnoClient {
           System.out.println("Buscando oponente...");
           String opName = "";
 
-          if(p == 1) {
+          if(p == 1 || p == 2) {
 
-            while(true) {
+            if(p == 1) {
+
+              while(true) {
+
+                opName = uno.obtemOponente(m_playerID);
+                if(!opName.isEmpty()) {
+
+                  gameFound = true;
+
+                  System.out.println("Achou! ->  " + opName);
+
+                  break;
+                }
+
+                System.out.println(":" + opName);
+
+                Thread.sleep(1000);
+              }
+            }
+            else if(p == 2) {
+
+              gameFound = true;
 
               opName = uno.obtemOponente(m_playerID);
-              if(!opName.isEmpty()) {
 
-                gameFound = true;
-
-                break;
-              }
-
-              Thread.sleep(1000);
+              System.out.println("Achou! ->  " + opName);
             }
           }
-          else if(p == 2) {
+          else {
 
-            gameFound = true;
-
-            opName = uno.obtemOponente(m_playerID);
+            System.out.println("DEU ALGUMA MERDA!!!");
           }
-
-          System.out.println("Achou! ->  " + opName);
 
           break;
         }
@@ -98,6 +110,8 @@ public class UnoClient {
 			}
 
 			if(gameFound) {
+
+        System.out.println("Iniciando partida...");
 
         while(true) {
 
@@ -135,13 +149,19 @@ public class UnoClient {
                 int    corAtiva   = uno.obtemCorAtiva(m_playerID);
 
                 Card            cartaMesa = gson.fromJson(sCartaMesa, Card.class);
-                ArrayList<Card> minhaMao  = gson.fromJson(sMinhaMao, ArrayList.class);
+                ArrayList<Card> minhaMao  = gson.fromJson(sMinhaMao, new TypeToken<ArrayList<Card>>() {}.getType());
 
                 String acao = EscolheAcao(cartaMesa, minhaMao, corAtiva);
 
                 if(acao.equals("b")) {
 
                   uno.compraCarta(m_playerID);
+                }
+                else if(acao.equals("p")) {
+
+                  uno.passaVez(m_playerID);
+
+                  break;
                 }
                 else {
 
@@ -187,11 +207,11 @@ public class UnoClient {
 
 	static String EscolheAcao(Card cartaMesa, ArrayList<Card> deck, int cor) {
 
-    System.out.println("Table: ");
+    System.out.println("MESA: ");
     cartaMesa.PrintCard();
-    System.out.println("Cur Color: " + (Card.CardColor.values()[cor]) + "\n");
+    System.out.println("COR CORRENTE: " + (Card.CardColor.values()[cor]) + "\n");
 
-    System.out.println("Cards: ");
+    System.out.println("SEU DECK: ");
 
     for(int i = 0; i < deck.size(); i++) {
 
@@ -201,9 +221,10 @@ public class UnoClient {
     }
 
     System.out.println("\nActions: ");
-    System.out.println("B - Buy a card");
+    System.out.println("B - Comprar carta");
+    System.out.println("P - Passar a vez");
 
-    System.out.print("\nSelect a play: ");
+    System.out.print("\nEscolha uma jogada: ");
 
     Scanner reader = new Scanner(System.in);
 
@@ -211,7 +232,7 @@ public class UnoClient {
 
       String op = reader.next().toLowerCase();
 
-      if(op.equals("b")) {
+      if(op.equals("b") || op.equals("p")) {
 
         return op;
       }
@@ -244,12 +265,12 @@ public class UnoClient {
     //  0 Vermelho
 
     System.out.println("\nColors: ");
-    System.out.println("1 - Red");
-    System.out.println("2 - Green");
-    System.out.println("3 - Yellow");
-    System.out.println("4 - Blue");
+    System.out.println("1 - Vermelho");
+    System.out.println("2 - Verde");
+    System.out.println("3 - Amarelo");
+    System.out.println("4 - Azul");
 
-    System.out.print("\nSelect a color: ");
+    System.out.print("\nEscolha uma cor: ");
 
     Scanner reader = new Scanner(System.in);
 
@@ -266,7 +287,7 @@ public class UnoClient {
       else if(op.equals("4"))
         return 3;
       else
-        System.out.println("INVALID CHOICE!!!");
+        System.out.println("ERRRROU!!!");
     }
   }
 }

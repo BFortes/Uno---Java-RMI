@@ -41,7 +41,13 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 	
 	@Override
 	public int encerraPartida(int id) throws RemoteException {
-		// TODO Auto-generated method stub
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return -1;
+
+    game.ResetGame();
+
 		return 0;
 	}
 	
@@ -50,8 +56,8 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 
 		UnoLogic game = GetFreeGame();
 		if(game != null)
-			return game.AddPlayer(new Player(id, game.GetGameId(), GetPlayerName(id)));
-		
+			return AddPlayerToGame(game, id, GetPlayerName(id));
+
 		return 0;
 	}
 	
@@ -238,7 +244,20 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 
     return game.GetPlayerPoints(id, true);
 	}
-	
+
+  @Override
+  public int passaVez(int id) throws RemoteException {
+
+    UnoLogic game = GetPlayerGame(id);
+    if(game == null)
+      return -1;
+
+    if(game.TotalPlayers() < 2)
+      return -2;
+
+    return game.PassTheTurn(id);
+  }
+
 	private synchronized int GetPlayerId() {
 	
 		return m_playerId++;
@@ -291,10 +310,10 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 		m_users.add(newPlayer);
 	}
 	
-	private synchronized void AddPlayerToGame(UnoLogic game, int id, String name) {
+	private synchronized int AddPlayerToGame(UnoLogic game, int id, String name) {
 		
-		Player newPlayer = new Player(game.GetGameId(), GetPlayerId(), name); 
+		Player newPlayer = new Player(game.GetGameId(), id, name);
 		
-		game.AddPlayer(newPlayer);
+		return game.AddPlayer(newPlayer);
 	}
 }

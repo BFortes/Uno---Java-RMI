@@ -86,4 +86,9 @@ public interface UnoInterface extends Remote {
     // -1   Jogador nao encontrado
     // -2   Nao ha 2 jogadores
     // -3   Partida nao concluida
+
+    public int passaVez(int id) throws RemoteException;
+    //  1   ok
+    // -1   Jogador nao encontrado
+    // -2   Nao ha 2 jogadores
 }

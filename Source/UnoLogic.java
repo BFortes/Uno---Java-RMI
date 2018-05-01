@@ -30,35 +30,27 @@ public class UnoLogic {
   public Card.CardColor m_cardCurColor = Card.CardColor.None;
   public Card.CardType m_cardTypeEffect = Card.CardType.None;
 
-  boolean m_isRunning = false;
-
   Gson m_gson = new Gson();
 
-	public UnoLogic() {}
-	
   public UnoLogic(int id) {
 
 		m_gameId = id;
 
-		m_state = GameState.Null;	
+    m_players   = new ArrayList<Player>();
+    m_cardDeck  = new ArrayList<Card>();
+    m_cardStack = new ArrayList<Card>();
+
+		ResetGame();
 	}
 
 	public boolean StartGame() {
 
-		if(m_players.size() < 2)
-			return false;
-
-  	Random r = new Random();
-  
     InitDeck();
+
+    m_cardStack.add(GetFirstDeckCard());
 
     for(int i = 0; i < m_players.size(); i++)
 	    m_players.get(i).SetDeck(InitPlayerDeck());
-    
-    m_playerTurn = r.nextInt(m_players.size());
-
-    m_cardStack = new ArrayList<Card>();
-    m_cardStack.add(GetFirstDeckCard());
 
     m_state = GameState.Playing;
 
@@ -381,8 +373,12 @@ public class UnoLogic {
 
       Player p = m_players.get(i);
 
-      if(p.GetId() != id)
+      if(p.GetId() != id) {
+
+        StartGame();
+
         return p.GetName();
+      }
     }
 
     return "";
@@ -477,6 +473,18 @@ public class UnoLogic {
     }
 
     return 0;
+  }
+
+  public int PassTheTurn(int id) {
+
+    if(IsPlayerTurn(id)) {
+
+      ChangeTurn();
+
+      return 1;
+    }
+
+    return -1;
   }
 
 	public int GetGameId() {
