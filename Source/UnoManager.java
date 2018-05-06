@@ -21,6 +21,19 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 			
 			m_games.add(new UnoLogic(i));
 		}
+
+    // UPDATE GAMES THREAD
+    new Thread() {
+
+      @Override
+      public void run() {
+        while(true) {
+
+          for(int i = 0; i < m_games.size(); i++)
+            m_games.get(i).UpdateGameState();
+        }
+      }
+    }.start();
 	}
 	
 	@Override
@@ -46,7 +59,8 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
     if(game == null)
       return -1;
 
-    game.ResetGame();
+    //game.ResetGame();
+    game.EndGame();
 
 		return 0;
 	}
@@ -187,7 +201,7 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
     if(game.TotalPlayers() < 2)
       return -2;
 
-    return game.PlayerBuyCard(id) ? 1 : -1;
+    return game.PlayerBuyCard(id) ? 0 : -1;
 	}
 	
 	@Override
@@ -210,7 +224,7 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
     if(!game.IsPlayerTurn(id))
       return -4;
 
-    return game.UpdateGameState(id, cartaMaoIndex, corCarta);
+    return game.PlayACard(id, cartaMaoIndex, corCarta);
 	}
 	
 	@Override
@@ -223,7 +237,7 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
     if(game.TotalPlayers() < 2)
       return -2;
 
-    if(game.IsRunning())
+    if(game.IsRunning() && !game.IsEndGame())
       return -3;
 
     return game.GetPlayerPoints(id, false);
@@ -239,7 +253,7 @@ public class UnoManager extends UnicastRemoteObject implements UnoInterface {
     if(game.TotalPlayers() < 2)
       return -2;
 
-    if(game.IsRunning())
+    if(game.IsRunning() && !game.IsEndGame())
       return -3;
 
     return game.GetPlayerPoints(id, true);

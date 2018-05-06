@@ -15,6 +15,8 @@ public class Player {
   
     m_id   = id;
 	  m_name = name;
+
+    m_cards = new ArrayList<Card>();
   }
 
   public Player() {}
@@ -49,10 +51,15 @@ public class Player {
   	
   	m_cards = deck;
   }
-  
-  public void BuyCard(Card card) {
+
+  public void AddCard(Card card) {
 
     m_cards.add(card);
+  }
+
+  public void BuyCard(Card card) {
+
+    AddCard(card);
 
     System.out.println(m_name + " bought a card: " + card.ToString());
   }

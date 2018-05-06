@@ -9,27 +9,29 @@ import com.google.gson.reflect.TypeToken;
 
 public class UnoClient {
 
-	static public int m_playerID = -1;
+	static public int m_playerID  = -1;
+  static public boolean m_isInputOn = false;
 
 	public static void main(String[] args) {
 
     Gson gson = new Gson();
 
-		long lastTime = System.nanoTime();
-
 		Scanner scanner = new Scanner(System.in);
 		
-		//System.out.println("Digite o endereco da maquina seguido de <ENTER>...");
+		System.out.println("Digite o ip do servidor(localhost para local) <ENTER>: ");
 	
-		//String endereco = scanner.next();
-		
-		System.out.println("Digite o seu nome para comecar a jogar seguido de <ENTER>...");
+		String endereco = scanner.next();
+
+		if(endereco.toLowerCase().contains("l"))
+		  endereco = "localhost";
+
+		System.out.println("Digite o seu nome de usuario <ENTER>: ");
 		
 		String nome = scanner.next();
 	
 		try {
 		
-			UnoInterface uno = (UnoInterface)Naming.lookup("//localhost/UnoManager");
+			UnoInterface uno = (UnoInterface)Naming.lookup("//"+ endereco + "/UnoManager");
 			
 			m_playerID = uno.registraJogador(nome);
 			
@@ -121,18 +123,21 @@ public class UnoClient {
           int minhaVez = uno.ehMinhaVez(m_playerID);
           if(minhaVez > 1) {
 
-            if(minhaVez == 2)
-              System.out.println("VOCE VENCEU!!!");
-            if(minhaVez == 3)
-              System.out.println("VOCE PERDEU!!!");
-            if(minhaVez == 4)
-              System.out.println("EMPATE!!!");
-            if(minhaVez == 5)
-              System.out.println("VOCE VENCEU POR WO!!!");
-            if(minhaVez == 6)
-              System.out.println("VOCE PERDEU POR WO!!!");
-
             uno.encerraPartida(m_playerID);
+
+            int meusPontos = uno.obtemPontos(m_playerID);
+            int opPontos   = uno.obtemPontosOponente(m_playerID);
+
+            if(minhaVez == 2)
+              System.out.println("VOCE VENCEU!!!  VOCE: " + meusPontos + " OPONENTE: " + opPontos);
+            if(minhaVez == 3)
+              System.out.println("VOCE PERDEU!!!  VOCE: " + meusPontos + " OPONENTE: " + opPontos);
+            if(minhaVez == 4)
+              System.out.println("EMPATE!!!  VOCE: " + meusPontos + " OPONENTE: " + opPontos);
+            if(minhaVez == 5)
+              System.out.println("VOCE VENCEU POR WO!!! VOCE: " + meusPontos);
+            if(minhaVez == 6)
+              System.out.println("VOCE PERDEU POR WO!!! OPONENTE: " + opPontos);
 
             gameFound = false;
 
@@ -142,45 +147,98 @@ public class UnoClient {
 
             if(minhaVez == 1) {
 
+              m_isInputOn = true;
+
               while(true) {
 
-                String sCartaMesa = uno.obtemCartaMesa(m_playerID);
-                String sMinhaMao  = uno.mostraMao(m_playerID);
-                int    corAtiva   = uno.obtemCorAtiva(m_playerID);
+                Thread inputThread = new Thread() {
 
-                Card            cartaMesa = gson.fromJson(sCartaMesa, Card.class);
-                ArrayList<Card> minhaMao  = gson.fromJson(sMinhaMao, new TypeToken<ArrayList<Card>>() {}.getType());
+                  @Override
+                  public void run() {
 
-                String acao = EscolheAcao(cartaMesa, minhaMao, corAtiva);
+                    try {
 
-                if(acao.equals("b")) {
+                      String sCartaMesa = uno.obtemCartaMesa(m_playerID);
+                      String sMinhaMao  = uno.mostraMao(m_playerID);
+                      int corAtiva      = uno.obtemCorAtiva(m_playerID);
 
-                  uno.compraCarta(m_playerID);
-                }
-                else if(acao.equals("p")) {
+                      Card            cartaMesa = gson.fromJson(sCartaMesa, Card.class);
+                      ArrayList<Card> minhaMao  = gson.fromJson(sMinhaMao, new TypeToken<ArrayList<Card>>() {}.getType());
 
-                  uno.passaVez(m_playerID);
+                      int totalCartasCompra = uno.obtemNumCartasBaralho(m_playerID);
 
-                  break;
-                }
-                else {
+                      String acao = EscolheAcao(cartaMesa, minhaMao, corAtiva, totalCartasCompra);
 
-                  try {
+                      //System.out.print("ACAO " + acao);
 
-                    int c = Integer.parseInt(acao);
+                      if(acao.equals("b")) {
 
-                    if(minhaMao.get(c).GetCardType() == Card.CardType.Wild || minhaMao.get(c).GetCardType() == Card.CardType.WildDrawFour)
-                      corAtiva = EscolheCor();
+                        int compra = uno.compraCarta(m_playerID);
+                        //System.out.println("\nCOMPRA: " + compra + "\n");
+                        m_isInputOn = false;
+                        return;
+                      }
+                      else if(acao.equals("p")) {
 
-                    int jogaCarta = uno.jogaCarta(m_playerID, c, corAtiva);
-                    if(jogaCarta == 1)
-                      break;
+                        int passa = uno.passaVez(m_playerID);
+                        //System.out.println("\nPASSOU: " + passa + "\n");
+                        m_isInputOn = false;
+                        return;
+                        //break;
+                      }
+                      else {
+
+                        try {
+
+                          int c = Integer.parseInt(acao);
+
+                          if(minhaMao.get(c).GetCardType() == Card.CardType.Wild || minhaMao.get(c).GetCardType() == Card.CardType.WildDrawFour)
+                            corAtiva = EscolheCor();
+
+                          int jogaCarta = uno.jogaCarta(m_playerID, c, corAtiva);
+                          System.out.println("\nCARTA: " + jogaCarta + "\n");
+                          //if(jogaCarta == 1)
+                            m_isInputOn = false;
+                            return;
+                            //break;
+                        }
+                        catch(Exception e) {
+
+                          System.out.println("\nInvalid option! " + acao + "\n");
+
+                          m_isInputOn = false;
+                          return;
+                        }
+                      }
+                    }
+                    catch (RemoteException e) {
+
+                      e.printStackTrace();
+                      return;
+                    }
                   }
-                  catch(Exception e) {
+                };
+                inputThread.start();
 
-                    System.out.println("\nInvalid option! " + acao + "\n");
+                boolean timeout = false;
+                while(!timeout) {
+
+                  timeout = uno.ehMinhaVez(m_playerID) != 1;
+
+                  if(timeout)
+                    inputThread.interrupt();
+
+                  if(!m_isInputOn) {
+
+                    inputThread.interrupt();
+                    break;
                   }
+
                 }
+
+                System.out.println("AGUARDE...\n");
+
+                break;
               }
             }
           }
@@ -205,11 +263,12 @@ public class UnoClient {
     }
   }
 
-	static String EscolheAcao(Card cartaMesa, ArrayList<Card> deck, int cor) {
+	static String EscolheAcao(Card cartaMesa, ArrayList<Card> deck, int cor, int totalCartas) {
 
     System.out.println("MESA: ");
     cartaMesa.PrintCard();
     System.out.println("COR CORRENTE: " + (Card.CardColor.values()[cor]) + "\n");
+    System.out.println("TOTAL DE CARTAS PARA COMPRA: " + totalCartas + "\n");
 
     System.out.println("SEU DECK: ");
 

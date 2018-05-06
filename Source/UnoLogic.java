@@ -6,13 +6,16 @@ import com.google.gson.Gson;
 
 public class UnoLogic {
 
-  public enum GameState { Null, Playing, Results }
+  public enum GameState { Null, FindPlayer, Playing, Results, EndGame }
 
   static final public int TOTAL_CARDS        = 108;
   static final public int TOTAL_NUM_CARDS    = 76;
   static final public int TOTAL_ACTION_CARDS = 24;
   static final public int TOTAL_WILD_CARDS   = 8;
   static final public int START_CARDS        = 7;
+  static final public int PLAY_TIMEOUT       = 60;
+  static final public int FIND_TIMEOUT       = 120;
+  static final public int DESTROY_TIMEOUT    = 60;
 
   private GameState m_state = GameState.Null;
 
@@ -30,6 +33,10 @@ public class UnoLogic {
   public Card.CardColor m_cardCurColor = Card.CardColor.None;
   public Card.CardType m_cardTypeEffect = Card.CardType.None;
 
+  long m_turnStartTime = 0;
+  long m_findStartTime = 0;
+  long m_destroyStartTime = 0;
+
   Gson m_gson = new Gson();
 
   public UnoLogic(int id) {
@@ -43,20 +50,30 @@ public class UnoLogic {
 		ResetGame();
 	}
 
+  // inicia uma partida
 	public boolean StartGame() {
 
-    InitDeck();
+    if(m_state == GameState.Null) {
 
-    m_cardStack.add(GetFirstDeckCard());
+      InitDeck();
 
-    for(int i = 0; i < m_players.size(); i++)
-	    m_players.get(i).SetDeck(InitPlayerDeck());
+      m_cardStack.add(GetFirstDeckCard());
 
-    m_state = GameState.Playing;
+      InitPlayerDeck();
 
-    return true;
+      m_playerTurn = 0;
+
+      m_turnStartTime = System.nanoTime();
+
+      m_state = GameState.Playing;
+
+      return true;
+    }
+
+    return false;
   }
 
+  // volta ao estado de jogo null, onde o jogo espera por novos jogadores
 	public void ResetGame() {
 	
 		m_state = GameState.Null;
@@ -67,13 +84,14 @@ public class UnoLogic {
 		
 		m_playerTurn = 0;
 		
-		m_playerCanBuyCard  = false;
+		m_playerCanBuyCard  = true;
 		m_playerCanPassTurn = false;
 		
 		m_cardCurColor   = Card.CardColor.None;
 		m_cardTypeEffect = Card.CardType.None;
 	}
 
+  // criacao do deck com todas as cartas do jogo. logo embaralhado
   void InitDeck() {
 
     m_cardDeck = new ArrayList<Card>();
@@ -121,78 +139,125 @@ public class UnoLogic {
     Collections.shuffle(m_cardDeck);
   }
 
-  public int UpdateGameState(int id, int cardIndex, int color) {
+  // update chamado a todo frame para atualizar os tempos de timeout
+  public void UpdateGameState() {
 
-    Player p = m_players.get(m_playerTurn);
-    if(p.GetId() != id)
-      return -4;
+    switch(m_state) {
 
-    Card card = p.GetDeck().get(cardIndex);
-    if(IsPlayValid(card)) {
+      case EndGame: {
 
-      m_cardStack.add(card);
+        long time = System.nanoTime();
+        double elapsed = (double)(time - m_destroyStartTime) / 1000000000.0;
 
-      m_players.get(m_playerTurn).SelectCard(cardIndex);
-
-      m_cardTypeEffect = card.GetCardType();
-      m_cardCurColor   = m_cardTypeEffect == Card.CardType.Wild
-                         || m_cardTypeEffect == Card.CardType.WildDrawFour ? Card.CardColor.values()[color]
-                                                                           : card.GetCardColor();
-
-      ChangeTurn();
-
-      return 1;
-    }
-    else {
-
-      return 0;
-    }
-  }
-
-  void ChangeTurn() {
-
-    if(m_players.get(m_playerTurn).GetTotalCards() == 0) {
-
-      m_state = GameState.Results;
-    }
-    else if(m_cardDeck.size() == 0 && !HavePlayerAction()) {
-
-      m_state = GameState.Results;
-    }
-    else {
-
-      switch(m_cardTypeEffect) {
-
-        case Reverse:
-        case Skip: {
-
-          m_playerTurn = (m_playerTurn+1)%m_players.size();
-        }
-        break;
-
-        case DrawTwo: {
-
-          m_playerTurn = (m_playerTurn+1)%m_players.size();
-
-          BuyCard(m_playerTurn, 2);
-        }
-        break;
-
-        case WildDrawFour: {
-
-          BuyCard((m_playerTurn+1)%m_players.size(), 4);
-        }
-        break;
+        if((int)elapsed >= DESTROY_TIMEOUT)
+          ResetGame();
       }
 
-      m_playerTurn = (m_playerTurn+1)%m_players.size();
+      case FindPlayer: {
 
-      m_cardTypeEffect = Card.CardType.None;
+        long time = System.nanoTime();
+        double elapsed = (double)(time - m_findStartTime) / 1000000000.0;
 
-      m_playerCanBuyCard = m_cardDeck.size() > 0;
+        if((int)elapsed >= FIND_TIMEOUT)
+          ChangeTurn();
+      }
+
+      case Playing: {
+
+        long time = System.nanoTime();
+        double elapsed = (double)(time - m_turnStartTime) / 1000000000.0;
+
+        if((int)elapsed >= PLAY_TIMEOUT)
+          ChangeTurn();
+      }
     }
   }
 
+  // jogador tenta realizar uma jogada
+  public int PlayACard(int id, int cardIndex, int color) {
+
+    if(m_state == GameState.Playing) {
+
+      Player p = m_players.get(m_playerTurn);
+      if(p.GetId() != id)
+        return -4;
+
+      Card card = p.GetDeck().get(cardIndex);
+      if(IsPlayValid(card)) {
+
+        m_cardStack.add(card);
+
+        p.SelectCard(cardIndex);
+
+        m_cardTypeEffect = card.GetCardType();
+        m_cardCurColor   = m_cardTypeEffect == Card.CardType.Wild
+                           || m_cardTypeEffect == Card.CardType.WildDrawFour ? Card.CardColor.values()[color]
+                                                                             : card.GetCardColor();
+
+        ChangeTurn();
+
+        return 1;
+      }
+      else {
+
+        return 0;
+      }
+    }
+
+    return 1;
+  }
+
+  // troca turno e atualiza board, bem como o efeito da ultima carta jogada
+  void ChangeTurn() {
+
+    if(m_state == GameState.Playing) {
+
+      if(m_players.get(m_playerTurn).GetTotalCards() == 0) {
+
+        m_state = GameState.Results;
+      }
+      else if(m_cardDeck.size() == 0 && !HavePlayerAction()) {
+
+        m_state = GameState.Results;
+      }
+      else {
+
+        switch(m_cardTypeEffect) {
+
+          case Reverse:
+          case Skip: {
+
+            m_playerTurn = (m_playerTurn+1)%m_players.size();
+          }
+          break;
+
+          case DrawTwo: {
+
+            m_playerTurn = (m_playerTurn+1)%m_players.size();
+
+            BuyCard(m_playerTurn, 2);
+          }
+          break;
+
+          case WildDrawFour: {
+
+            BuyCard((m_playerTurn+1)%m_players.size(), 4);
+          }
+          break;
+        }
+
+        m_turnStartTime = System.nanoTime();
+
+        m_playerTurn = (m_playerTurn+1)%m_players.size();
+
+        m_cardTypeEffect = Card.CardType.None;
+
+        m_playerCanBuyCard = m_cardDeck.size() > 0;
+      }
+    }
+  }
+
+  // verifica se jogada feita por um jogador eh valida
   boolean IsPlayValid(Card card) {
 
     if(m_cardStack.size() > 0) {
@@ -245,18 +310,17 @@ public class UnoLogic {
     return false;
   }
 
-  ArrayList<Card> InitPlayerDeck() {
+  // distribui cartas para jogadores. 1 pra cada até 7
+  void InitPlayerDeck() {
 
-    ArrayList<Card> deck = new ArrayList<Card>();
+    int pIndex = 0;
+    for(int i = 0; i < START_CARDS*2; i++ ) {
 
-    for(int i = 0; i < START_CARDS; i++ ) {
-
-      deck.add( m_cardDeck.get(i));
-
+      m_players.get(pIndex).AddCard(m_cardDeck.get(i));
       m_cardDeck.remove(i);
-    }
 
-    return deck;
+      pIndex = (pIndex+1)%m_players.size();
+    }
   }
 
   Card GetFirstDeckCard() {
@@ -280,9 +344,16 @@ public class UnoLogic {
     }
   }
 
-  void BuyCard(int playerIndex, int total) {
+  // jogador tenta comprar uma carta
+  boolean BuyCard(int playerIndex, int total) {
+
+    if(total == 1 && !m_playerCanBuyCard)
+      return false;
 
     if(m_cardDeck.size() > 0) {
+
+      if(total > m_cardDeck.size())
+        total = m_cardDeck.size()-1;
 
       for(int i = 0; i < total; i++) {
 
@@ -296,17 +367,22 @@ public class UnoLogic {
         }
       }
 
-      m_playerCanBuyCard = false;
+      m_playerCanBuyCard = total > 1;
+
+      return true;
     }
     else {
 
       System.out.println("NO CARDS TO BUY!");
+
+      return false;
     }
   }
 
+  // metodo para saber quem foi o ganhador por pontos
   public int GetWinner(int id) {
 
-    if(m_state == GameState.Results) {
+    if(m_state == GameState.Results || m_state == GameState.EndGame) {
 
       int p1Points = 9999;
       int p2Points = 9999;
@@ -332,27 +408,50 @@ public class UnoLogic {
         p1Points = aux;
       }
 
-      if(p1Points > p2Points)
+      if(p1Points > p2Points) {
+
+        System.out.println("VENCEDOR: " + GetPlayerName(id, false) + " " + GetPlayerPoints(id, false)
+                        + " PERDEDOR: " + GetPlayerName(id, true)  + " " + GetPlayerPoints(id, true));
+
         return 2;
-      else if(p1Points < p2Points)
+      }
+      else if(p1Points < p2Points) {
+
+        System.out.println("VENCEDOR: " + GetPlayerName(id, true)  + " " + GetPlayerPoints(id, true)
+                        + " PERDEDOR: " + GetPlayerName(id, false) + " " + GetPlayerPoints(id, false));
+
         return 3;
-      else
+      }
+      else {
+
+        System.out.println("EMPATE!");
+
         return 4;
+      }
     }
 
     return -1;
   }
 
+  // adicionar players a partida
 	public int AddPlayer(Player newPlayer) {
 	
 		if(TotalPlayers() == 2)
 			return 0;
-	
+
 		m_players.add(newPlayer);
+
+		if(TotalPlayers() == 1) {
+
+      //m_findStartTime = System.nanoTime();
+
+      //m_state = GameState.FindPlayer;
+    }
 		
 		return TotalPlayers();
 	}
 
+  // verifica se tal jogador esta na partida
 	public boolean IsPlayerInGame(int id) {
 
     for(int i = 0; i < m_players.size(); i++)
@@ -362,11 +461,27 @@ public class UnoLogic {
     return false;
   }
 
+  // verifica se tal jogador esta jogando
   public boolean IsPlayerTurn(int id) {
 
     return m_players.get(m_playerTurn).GetId() == id;
   }
 
+  public String GetPlayerName(int id, boolean opponent) {
+
+    for(int i = 0; i < m_players.size(); i++) {
+
+      Player p = m_players.get(i);
+
+      if(p.GetId() == id && !opponent
+          || p.GetId() != id && opponent)
+        return p.GetName();
+    }
+
+    return "";
+  }
+
+  // metodo para informar ao servidor que o oponente esta conectado e entao pode-se iniciar a partida
   public String GetOpponentName(int id) {
 
     for(int i = 0; i < m_players.size(); i++) {
@@ -384,6 +499,7 @@ public class UnoLogic {
     return "";
   }
 
+  // numero total de cartas de um jogador
   public int GetTotalPlayerDeckNum(int id, boolean opponent) {
 
     for(int i = 0; i < m_players.size(); i++) {
@@ -397,6 +513,7 @@ public class UnoLogic {
     return -1;
   }
 
+  // numero total de cartas da mesa para compra
   public int GetTotalDeckNum() {
 
     return m_cardDeck.size();
@@ -412,6 +529,7 @@ public class UnoLogic {
 		return m_players.size();
 	}
 
+  // tal jogador tenta comprar uma carta
 	public boolean PlayerBuyCard(int id) {
 
     int myIndex = -1;
@@ -419,14 +537,10 @@ public class UnoLogic {
       if(m_players.get(i).GetId() == id)
         myIndex = i;
 
-    if(myIndex > 0)
-      return false;
-
-    BuyCard(myIndex, 1);
-
-    return true;
+    return BuyCard(myIndex, 1);
   }
 
+  // parser do deck de um jogador para ser enviado ao servidor e assim ao cliente
   public String GetPlayerDeckString(int id) {
 
     for(int i = 0; i < m_players.size(); i++) {
@@ -442,6 +556,7 @@ public class UnoLogic {
     return "";
   }
 
+  // parser da primeira carta da pilha da mesa para ser enviado ao servidor e assim ao cliente
   public String GetFirstStackCardString () {
 
     if(m_cardStack.size() > 0)
@@ -450,6 +565,7 @@ public class UnoLogic {
     return "";
   }
 
+  // se o jogador corrente tem alguma acao para fazer
   public boolean HavePlayerAction() {
 
     ArrayList<Card> pDeck = m_players.get(m_playerTurn).GetDeck();
@@ -475,6 +591,7 @@ public class UnoLogic {
     return 0;
   }
 
+  // jogador passa a vez
   public int PassTheTurn(int id) {
 
     if(IsPlayerTurn(id)) {
@@ -492,8 +609,24 @@ public class UnoLogic {
 		return m_gameId;
 	}
 
+  // trigger para comecar a contagem ateh "destruir" a partida
+  public void EndGame() {
+
+    if(m_state == GameState.EndGame)
+      return;
+
+    m_destroyStartTime = System.nanoTime();
+
+    m_state = GameState.EndGame;
+  }
+
   public boolean IsRunning() {
 
     return m_state != GameState.Null;
+  }
+
+  public boolean IsEndGame() {
+
+    return m_state == GameState.EndGame;
   }
 }
