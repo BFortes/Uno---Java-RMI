@@ -39,6 +39,12 @@ public class UnoClient {
 			
 				System.out.println("Jogador ja registrado!");
 			}
+			else if(m_playerID == -2) {
+			
+				System.out.println("Servidor Lotado!");
+			
+				return;
+			}
 			else {
 			
 				System.out.println("Jogador registrado com sucesso!");
