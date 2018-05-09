@@ -1,21 +1,29 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 
 public class UnoManager extends UnicastRemoteObject implements UnoInterface {
 
+	private static final long serialVersionUID = 3014726454955238436L;
+	
 	final int MAX_GAMES = 10;
 	final int MAX_USERS = MAX_GAMES*2;
 	
 	private ArrayList<UnoLogic> m_games;
 	private ArrayList<Player>  m_users;
 	
+	private Map<Integer, UnoLogic> m_sessions;
+	
 	private int m_playerId = 0;
 	
 	public UnoManager() throws RemoteException {
 		
-		m_games = new ArrayList<UnoLogic>();
-		m_users = new ArrayList<Player>();
+		m_games    = new ArrayList<UnoLogic>();
+		m_users    = new ArrayList<Player>();
+		m_sessions = new HashMap<Integer, UnoLogic>();
 		
 		for(int i = 0; i < MAX_GAMES; i++) {
 			
