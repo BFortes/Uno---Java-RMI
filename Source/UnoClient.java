@@ -86,8 +86,6 @@ public class UnoClient {
                   break;
                 }
 
-                System.out.println(":" + opName);
-
                 Thread.sleep(1000);
               }
             }
@@ -151,6 +149,7 @@ public class UnoClient {
 
               while(true) {
 
+              	// inicia thread para input do jogador (assim eh possivel para-la caso tenha timeout)
                 Thread inputThread = new Thread() {
 
                   @Override
@@ -165,9 +164,10 @@ public class UnoClient {
                       Card            cartaMesa = gson.fromJson(sCartaMesa, Card.class);
                       ArrayList<Card> minhaMao  = gson.fromJson(sMinhaMao, new TypeToken<ArrayList<Card>>() {}.getType());
 
-                      int totalCartasCompra = uno.obtemNumCartasBaralho(m_playerID);
+                      int totalCartasCompra   = uno.obtemNumCartasBaralho(m_playerID);
+                      int totalCartasOponente = uno.obtemNumCartasOponente(m_playerID);
 
-                      String acao = EscolheAcao(cartaMesa, minhaMao, corAtiva, totalCartasCompra);
+                      String acao = EscolheAcao(cartaMesa, minhaMao, corAtiva, totalCartasOponente, totalCartasCompra);
 
                       //System.out.print("ACAO " + acao);
 
@@ -263,11 +263,12 @@ public class UnoClient {
     }
   }
 
-	static String EscolheAcao(Card cartaMesa, ArrayList<Card> deck, int cor, int totalCartas) {
+	static String EscolheAcao(Card cartaMesa, ArrayList<Card> deck, int cor, int totalCartasOponente, int totalCartas) {
 
     System.out.println("MESA: ");
     cartaMesa.PrintCard();
     System.out.println("COR CORRENTE: " + (Card.CardColor.values()[cor]) + "\n");
+    System.out.println("TOTAL DE CARTAS DO OPONENTE: " + totalCartasOponente + "\n");
     System.out.println("TOTAL DE CARTAS PARA COMPRA: " + totalCartas + "\n");
 
     System.out.println("SEU DECK: ");
