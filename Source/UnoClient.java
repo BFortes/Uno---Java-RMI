@@ -202,7 +202,7 @@ public class UnoClient {
                             corAtiva = EscolheCor();
 
                           int jogaCarta = uno.jogaCarta(m_playerID, c, corAtiva);
-                          System.out.println("\nCARTA: " + jogaCarta + "\n");
+                          //System.out.println("\nCARTA: " + jogaCarta + "\n");
                           //if(jogaCarta == 1)
                             m_isInputOn = false;
                             return;
